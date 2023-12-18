@@ -70,7 +70,11 @@ const campSchema = new mongoose.Schema({
       address: String,
       description: String,
       day: Number
-    }]
+    }],
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 },
   {

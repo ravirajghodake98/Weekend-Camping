@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
@@ -42,7 +43,7 @@ exports.createCamp = catchAsync(async (req, res) => {
   } else {
     const createdCamp = await Camp.create({
       ...req.body,
-      createBy: req.user._id
+      // createdBy: req.user._id
     });
 
     return res.status(201).json({
@@ -54,13 +55,51 @@ exports.createCamp = catchAsync(async (req, res) => {
 })
 
 exports.getAllCamps = catchAsync(async (req, res) => {
+  const allCamps = await Camp.find({ isActive: true }).lean();
+  if (!allCamps || allCamps.length === 0) {
+    throw new AppError('No camps found', 404);
+  }
 
+  return res.status(200).json({
+    status: 'success',
+    totalCamps: allCamps.length,
+    allCamps
+  })
 })
 
 exports.getCamp = catchAsync(async (req, res) => {
+  const { campId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(campId)) {
+    throw new AppError(400, 'Please enter valid camp id.')
+  }
 
+  const camp = await Camp.findById(campId).lean();
+  if (!camp) {
+    throw new AppError('This camp does not exist!', 404);
+  }
+
+  return res.status(200).json({
+    status: 'success',
+    camp
+  })
 })
 
 exports.deleteCamp = catchAsync(async (req, res) => {
+  const { campId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(campId)) {
+    throw new AppError(400, 'Please enter valid camp id.')
+  }
 
+  const camp = await Camp.findById(campId, { isActive: true });
+  if (!camp) {
+    throw new AppError('This camp does not exist!', 404);
+  }
+
+  camp.isActive = false;
+  await camp.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Camp deleted successfully!'
+  })
 })
